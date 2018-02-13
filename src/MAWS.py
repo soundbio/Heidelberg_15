@@ -411,8 +411,8 @@ class Aptamer:
         self.process.sendline("set default PBradii mbondi2")
         self.process.sendline("ligand = load"+_FORMAT+" "+ligand_mol2_path)
         if _HYBRID != "":
-		self.process.sendline("loadamberparams "+_HYBRID)
-	self.geometry = []
+            self.process.sendline("loadamberparams "+_HYBRID)
+        self.geometry = []
         self.position = [0, 0, 0]
         self.orientation = [0, 0, 0]
         #global lig_energy
@@ -510,18 +510,18 @@ class Aptamer:
     def get_offset(self,identifier,residue_idx_1,residue_idx_2):
         self.process.sendline("desc "+identifier+"."+str(residue_idx_1)+".1")
         self.process.expect("Atom position:")
-	print self.process.before
-	print self.process.after
+        print(self.process.before)
+        print(self.process.after)
         self.process.expect("Atom velocity")
         vector1 = eval("["+self.process.before.strip()+"]")
         #print vector1
-	time.sleep(1)
+        time.sleep(1)
         self.process.sendline("desc "+identifier+"."+str(residue_idx_2)+".1")
-        print self.process.before
-	print self.process.after
-	self.process.expect("Atom position:")
-	print self.process.before
-	print self.process.after
+        print(self.process.before)
+        print(self.process.after)
+        self.process.expect("Atom position:")
+        print(self.process.before)
+        print(self.process.after)
         self.process.expect("Atom velocity")
         vector2 = eval("["+self.process.before.strip()+"]")
         #print vector2
@@ -794,10 +794,10 @@ def initial_sample(topology,coordinates,Nsteps,index,box=50,rang=[0,60]):
             cnt += 1
             positions = pos
             #print(free_E)
-	    fil = open("montetest%s.pdb"%i,"w")
-	    app.PDBFile.writeModel(aptamer_top.topology,pos,file=fil,modelIndex=i)
-	    fil.close()
-	    del fil
+        fil = open("montetest%s.pdb"%i,"w")
+        app.PDBFile.writeModel(aptamer_top.topology,pos,file=fil,modelIndex=i)
+        fil.close()
+        del fil
 
     return en, pos, xyz, free_E, index
 
@@ -882,10 +882,9 @@ def mcmc_sample(topology, coordinates, old_coordinates, index, stepsize=200, Nst
         free_E = state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole)
         #print(free_E)
         fil = open("montestep%s.pdb"%i,"w")
-	app.PDBFile.writeModel(aptamer_top.topology,state.getPositions(),file=fil,modelIndex=i)
-	fil.close()
-	del fil
-
+        app.PDBFile.writeModel(aptamer_top.topology,state.getPositions(),file=fil,modelIndex=i)
+        fil.close()
+        del fil
         if free_E < free_E_old:
             positions = state.getPositions()
         en.append(free_E)
@@ -936,8 +935,6 @@ def mcmc_sample_five(topology, coordinates, old_coordinates, index, stepsize=200
         en.append(free_E)
 
     return en, positions, free_E
-    
-        
 
 def initial(Ntide):
     global _NINIT
@@ -958,6 +955,8 @@ def initial(Ntide):
     
     aptamer_top = app.AmberPrmtopFile("%s.prmtop"%Ntide)
     aptamer_crd = app.AmberInpcrdFile("%s.inpcrd"%Ntide)
+    
+    print('success')
     
     ligand_range = get_ligand_range(aptamer_top.topology)
     #sample_box_task = ligand_box(0.1)
@@ -1103,7 +1102,7 @@ def loop():
     pos_Nt_S_task = []
     pool = Pool(4)
     pos_Nt_S_task = pool.map(initial,alphabet)
-
+    
     pos_Nt_S = pos_Nt_S_task
     
     #print("Nucleotides with their respective entropies are: ")
@@ -1163,7 +1162,7 @@ def loop():
         for elem in pos_Nt:
             Ntides.append(elem[1])
         for elem in pos_Nt:
-        positions.append(elem[0])
+            positions.append(elem[0])
         print("Chosen sequences are: ")
         for elem in pos_Nt:
             print(elem[1])
@@ -1214,5 +1213,3 @@ result(positions_and_Ntides)
 
 print("Run successful!")
 print("Please come again!")
-
-
