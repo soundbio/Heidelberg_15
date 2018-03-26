@@ -21,8 +21,13 @@ import os.path as path
 import time
 from multiprocessing import *
 import argparse
+import logging
 
-forcefield_name = "leaprc.ff12SB"
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+forcefield_name = "leaprc.ff14SB"
+forcefield_name = 'leaprc.constph'
 
 def gen_range(lower, upper, step):
     start = lower
@@ -406,10 +411,14 @@ class Aptamer:
     global _HYBRID
 
     def __init__(self, forcefield_name, ligand_mol2_path):
-        self.process = pexpect.spawn('tleap -f'+forcefield_name)
+        s = 'tleap -f '+forcefield_name
+        logger.debug('__init__ 1: ' + s)
+        self.process = pexpect.spawn(s)
         self.process.sendline('source leaprc.gaff')
         self.process.sendline("set default PBradii mbondi2")
-        self.process.sendline("ligand = load"+_FORMAT+" "+ligand_mol2_path)
+        s = "ligand = load"+_FORMAT+" "+ligand_mol2_path
+        logger.debug('__init__ 2: ' + s)
+        self.process.sendline(s)
         if _HYBRID != "":
             self.process.sendline("loadamberparams "+_HYBRID)
         self.geometry = []
@@ -437,11 +446,15 @@ class Aptamer:
     
     def sequence(self, identifier, string_of_residues):
         inputstring = "{"+string_of_residues+"}"
-        self.command(identifier+" = sequence "+inputstring)
+        s = identifier+" = sequence "+inputstring
+        logger.debug('sequence: ' + s)
+        self.command(s)
         #self.command("union = combine { "+identifier+" ligand }")
         
     def unify(self, identifier):
-        self.command("union = combine { ligand "+identifier+" }")
+        s = "union = combine { ligand "+identifier+" }"
+        logger.debug('unify: ' + s)
+        self.command(s)
         
         
     def seq_first(self, identifier, string_of_residues):
@@ -574,7 +587,7 @@ def ligand_box(padding):
         box_y = max([abs(positions[i][1]) for i in range(len(positions))]) + padding
         box_z = max([abs(positions[i][2]) for i in range(len(positions))]) + padding
         return box_x, box_y, box_z, longest_distance
-    
+
 
 def ligand_energy():
         #self.command("saveamberparm ligand ligand.prmtop ligand.inpcrd")
@@ -590,7 +603,7 @@ def ligand_energy():
         lig_state = lig_simulation.context.getState(getEnergy = True)
         lig_energy = lig_state.getPotentialEnergy().value_in_unit(kilojoule_per_mole)
         return lig_energy
-    
+
     
 def get_PO3(positions_old, positions):
     pos = positions
@@ -943,10 +956,15 @@ def initial(Ntide):
     beta = _BETA
     print("Constructing Ligand/Aptamer complex ...")
     
-    internal = Aptamer("leaprc.ff12SB", _INFILE)
+    # original line:
+    #internal = Aptamer("leaprc.ff12SB", _INFILE)
+    
+    internal = Aptamer(forcefield_name, _INFILE)
     internal.sequence(Ntide,Ntide)
     internal.unify(Ntide)
-    internal.command("saveamberparm union %s.prmtop %s.inpcrd"%(Ntide,Ntide))
+    c = "saveamberparm union %s.prmtop %s.inpcrd" % (Ntide,Ntide)
+    logger.debug(c)
+    internal.command(c)
     
     time.sleep(1)
     
@@ -1099,20 +1117,30 @@ def loop():
     print(alphabet)
     print("Choosing from candidates ...")
     
-    pos_Nt_S_task = []
-    pool = Pool(4)
-    pos_Nt_S_task = pool.map(initial,alphabet)
+    positions = []
+    Ntides = []
+    entropies = []
+    for n in alphabet:
+        pos, nt, ent = initial(n)
+        print('out!')
+        position.append(pos)
+        Ntides.append(nt)
+        entropies.append(ent)
     
-    pos_Nt_S = pos_Nt_S_task
+    #pos_Nt_S_task = []
+    #pool = Pool(4)
+    #pos_Nt_S_task = pool.map(initial,alphabet)
+    
+    #pos_Nt_S = pos_Nt_S_task
     
     #print("Nucleotides with their respective entropies are: ")
     #print(pos_Nt_S[1],pos_Nt_S[2])
     
-    positions = [elem[0] for elem in pos_Nt_S]
+    #positions = [elem[0] for elem in pos_Nt_S]
     #print(pos_Nt_S)
     
-    Ntides = [elem[1] for elem in pos_Nt_S]
-    entropies = [elem[2] for elem in pos_Nt_S]
+    #Ntides = [elem[1] for elem in pos_Nt_S]
+    #entropies = [elem[2] for elem in pos_Nt_S]
 
     pos_Nt = evaluate(positions, Ntides, entropies, threshold=0.5)
     
